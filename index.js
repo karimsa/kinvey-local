@@ -8,8 +8,7 @@
 (function () {
     "use strict";
 
-    var fs = require('fs'),
-        path = require('path'),
+    var path = require('path'),
         deepExtend = require('deep-extend'),
         EventEmitter = require('events').EventEmitter,
         noop = function () {

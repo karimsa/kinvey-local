@@ -313,7 +313,7 @@
             },
             error: function (err) {
                 t.ok(true, 'endpoint failed');
-                t.notEqual(err.debug.indexOf('ENOENT, open'), -1);
+                t.notEqual(err.debug.indexOf('Cannot find module'), -1);
             }
         });
     });
