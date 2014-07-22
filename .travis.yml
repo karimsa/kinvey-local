@@ -9,3 +9,6 @@ deploy:
   on:
     repo: karimsa/kinvey-local
     branch: master
+addons:
+  code_climate:
+    repo_token: 7efc1e917192612829a4b9f2ce7fa3102fe2465ad808f7ebeef11435c9c8edcb
