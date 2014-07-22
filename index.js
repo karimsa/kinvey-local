@@ -163,6 +163,8 @@
             // configure phony local env
             // using options
             setOptions: function (options) {
+                var endBase;
+
                 // puts users store back into collections
                 if (options.hasOwnProperty('users')) {
                     options.collections = options.collections || {};
@@ -177,7 +179,14 @@
 
                 // endpoint path base
                 if (options.hasOwnProperty('endpoints-base')) {
-                    Kinvey._endBase = options['endpoints-base'];
+                    endBase = path.resolve(options['endpoints-base']);
+
+                    // make property read-only
+                    Kinvey.__defineGetter__("_endBase", function () {
+                        return endBase;
+                    });
+                } else {
+                    throw new Kinvey.Error('The `endpoints-base` property is required.');
                 }
 
                 // nodemailer config
@@ -274,36 +283,48 @@
 
                 callbacks = callbacks || {};
 
-                fs.readFile(path.join(Kinvey._endBase, name + '.js'), 'utf8', function (err, js) {
-                    if (err) {
-                        callbacks.error({
-                            name: 'BLInternalError',
-                            description: 'The Business Logic script did not complete. See debug message for details',
-                            debug: String(err)
-                        });
-                    } else {
-                        // adding this to the end causes
-                        // the onRequest callback to be
-                        // returned from eval; strict mode
-                        // will stop this from going global
-                        js += ';onRequest';
+                try {
+                    // use hooked require to load the endpoint
+                    var onRequest = require(path.join(Kinvey._endBase, name + '.js'));
 
-                        // save endpoint callback
-                        var onRequest = eval(js);
+                    // set once event handlers
+                    Kinvey._events.once('complete', callbacks.success || noop);
+                    Kinvey._events.once('uderror', callbacks.error || noop);
 
-                        // set once event handlers
-                        Kinvey._events.once('complete', callbacks.success || noop);
-                        Kinvey._events.once('uderror', callbacks.error || noop);
+                    // execute the endpoint
+                    onRequest(Kinvey._request(name, data), Kinvey._response(), Kinvey._modules);
+                } catch (err) {
+                    callbacks.error({
+                        name: 'BLInternalError',
+                        description: 'The Business Logic script did not complete. See debug message for details',
+                        debug: String(err)
+                    });
+                }
+            }
+        },
+        hooks = {
+            hook: require('istanbul').hook,
 
-                        // execute the endpoint
-                        onRequest(Kinvey._request(name, data), Kinvey._response(), Kinvey._modules);
-                    }
-                });
+            // only allow transformation of
+            // modules starting with the
+            // endpoints' path
+            match: function (file) {
+                return file.substr(0, Kinvey._endBase.length) === Kinvey._endBase;
+            },
+
+            // simply extend the endpoint code
+            // to export the endpoint using node's
+            // module.exports style
+            transform: function (code) {
+                return code + ';module.exports=onRequest;';
             }
         };
 
     // give modules the env as well
     Kinvey._modules = Kinvey._modules(Kinvey);
+
+    // add hook to require() for endpoints
+    hooks.hook.hookRequire(hooks.match, hooks.transform);
 
     // expose full object
     module.exports = Kinvey;
