@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+- 0.1
+deploy:
+  provider: npm
+  email: k4rim.sa@gmail.com
+  api_key:
+    secure: gXftF9NTMtKw//6KFL5EkSWVwSZdKjq41McLwrL+EU50CciFfO163s9k44nmbQldaCft263UTF7xMkHe9q7H7VpdFwpWLC5ipRAC4VLKBR+gteNjlbbyGhS8wCv4ZMQ7SHp3lbzTtyDaJ305PUHrGXwYrkMIbczDDFKQSumcFJU=
+  on:
+    repo: karimsa/kinvey-local
+    branch: master
