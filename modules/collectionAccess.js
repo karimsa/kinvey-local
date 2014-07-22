@@ -79,8 +79,8 @@
 
     module.exports = function (Kinvey) {
         var colAccess = {
-            // create object around kinvey identifier
-            // because kinvey is stupid
+            // use simple strings to simplify
+            // things
             objectID: function (id) {
                 return String(id);
             },
