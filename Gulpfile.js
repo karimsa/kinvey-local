@@ -16,8 +16,7 @@
         return gulp.src(['Gulpfile.js', 'index.js', 'modules/*.js', 'test/test-*.js', 'example/*.js', 'example/*/*.js'])
             .pipe(jslint({
                 node: true,
-                nomen: true,
-                evil: true
+                nomen: true
             }));
     });
 }());

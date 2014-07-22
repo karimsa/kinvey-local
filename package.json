@@ -30,7 +30,6 @@
     "gulp": "^3.8.6",
     "tape": "2.13.3",
     "vinyl": "^0.3.0",
-    "istanbul": "^0.3.0",
     "codeclimate-test-reporter": "0.0.3",
     "rimraf": "^2.2.8"
   },
@@ -42,6 +41,7 @@
     "async": "^0.9.0",
     "request": "^2.37.0",
     "deep-equal": "^0.2.1",
-    "nodemailer": "^1.0.3"
+    "nodemailer": "^1.0.3",
+    "istanbul": "^0.3.0"
   }
 }
