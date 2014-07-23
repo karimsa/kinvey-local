@@ -9,7 +9,7 @@
     "use strict";
 
     var match = function (str, ptn) {
-        var matches = str.match(ptn), tmp = [], i;
+        var matches = String(str).match(ptn), tmp = [], i;
 
         // remove empty matches
         for (i = 0; i < matches.length; i += 1) {

@@ -1,6 +1,6 @@
 {
   "name": "kinvey-local",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tool to mock the Kinvey environment for testing.",
   "main": "index.js",
   "scripts": {
