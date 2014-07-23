@@ -39,64 +39,70 @@
         APP_SECRET = 'xxx-appSecret-xxx',
         MASTER_SECRET = 'xxx-masterSecret-xxx';
 
-    if (USE_LOCAL) {
-        Kinvey = require('../index.js');
-
-        // these settings are to mimic
-        // the target environment.
-        Kinvey.setOptions({
-            'endpoints-base': path.resolve(__dirname, '../example/endpoints'),
-            email: {},
-            users: [
-                {
-                    _id: 'xxx-one-xxx',
-                    first_name: 'User',
-                    last_name: 'One',
-                    username: 'userone',
-                    password: 'passone',
-                    email: 'one@example.com'
-                },
-                {
-                    _id: 'xxx-two-xxx',
-                    first_name: 'User',
-                    last_name: 'Two',
-                    username: 'usertwo',
-                    password: 'passtwo',
-                    email: 'two@example.com'
-                }
-            ],
-            collections: {
-                messages: [
-                    {
-                        _id: 'xxx#1',
-                        no: 1,
-                        text: 'Hello, world'
-                    },
-                    {
-                        _id: 'xxx#2',
-                        no: 2,
-                        text: 'Hello, #2'
-                    },
-                    {
-                        _id: 'xxx#3',
-                        no: 3,
-                        text: 'Hello, #3'
-                    }
-                ]
-            }
-        });
-    } else {
-        // if you use the actual kinvey
-        // object, be sure to change the app
-        // credentials above. Also, setup
-        // the target environment with the settings
-        // passed above to the local object
-        Kinvey = require('kinvey');
-    }
-
     /**
      * CORE TESTING
      **/
+
+    test('setup Kinvey env', function (t) {
+        if (USE_LOCAL) {
+            Kinvey = require('../index.js');
+
+            t.plan(1);
+            t.throws(function () {
+                Kinvey.setOptions({});
+            }, false, 'ensure that `endpoints-base` is given');
+
+            // these settings are to mimic
+            // the target environment.
+            Kinvey.setOptions({
+                'endpoints-base': path.resolve(__dirname, '../example/endpoints'),
+                email: {},
+                users: [
+                    {
+                        _id: 'xxx-one-xxx',
+                        first_name: 'User',
+                        last_name: 'One',
+                        username: 'userone',
+                        password: 'passone',
+                        email: 'one@example.com'
+                    }, {
+                        _id: 'xxx-two-xxx',
+                        first_name: 'User',
+                        last_name: 'Two',
+                        username: 'usertwo',
+                        password: 'passtwo',
+                        email: 'two@example.com'
+                    }
+                ],
+                collections: {
+                    messages: [
+                        {
+                            _id: 'xxx#1',
+                            no: 1,
+                            text: 'Hello, world'
+                        }, {
+                            _id: 'xxx#2',
+                            no: 2,
+                            text: 'Hello, #2'
+                        }, {
+                            _id: 'xxx#3',
+                            no: 3,
+                            text: 'Hello, #3'
+                        }
+                    ]
+                }
+            });
+        } else {
+            t.done();
+
+            // if you use the actual kinvey
+            // object, be sure to change the app
+            // credentials above. Also, setup
+            // the target environment with the settings
+            // passed above to the local object
+            Kinvey = require('kinvey');
+        }
+    });
 
     // .init()
     test('initalize Kinvey', function (t) {
@@ -320,7 +326,7 @@
 
     // backendContext
     test('verify backendContext', function (t) {
-        t.plan(25);
+        t.plan(28);
 
         var modules = Kinvey._modules,
             dt = (new Date()).toISOString(),
@@ -329,6 +335,19 @@
             isEntity = function (object) {
                 return object && typeof object === 'object' && object.hasOwnProperty('_id') && object.hasOwnProperty('_acl') && object.hasOwnProperty('_kmd');
             };
+
+        Kinvey._mailTransport = 'events';
+        Kinvey._events.once('email', function (evt) {
+            t.deepEqual(evt, {
+                from: 'test',
+                to: 'test',
+                subject: 'test',
+                text: 'test',
+                replyTo: 'test',
+                html: 'test'
+            }, 'event-based email receives proper data');
+        });
+        modules.email.send('test', 'test', 'test', 'test', 'test', 'test');
 
         t.ok(isEntity(modules.utils.kinveyEntity()), 'entity from nothing');
         t.ok(isEntity(modules.utils.kinveyEntity({})), 'entity from object');
@@ -344,6 +363,16 @@
         t.equal(modules.backendContext.getAppSecret(), APP_SECRET, 'appSecret');
         t.equal(modules.backendContext.getMasterSecret(), null, 'masterSecret');
         t.equal(modules.backendContext.getSecurityContext(), Kinvey.getActiveUser().username, 'getSecurityContext');
+
+        t.equal(modules.collectionAccess.deepValue('prop.random.inner', {
+            prop: {}
+        }), undefined, 'fetch deepValue by selector');
+
+        modules.collectionAccess.collection('messages').insert(function () {
+            return false;
+        }, function () {
+            t.notOk(!Kinvey._collections.messages[Kinvey._collections.messages.length - 1], 'test bad insert');
+        });
 
         t.equal(modules.collectionAccess.objectID('hello') + 'world', 'helloworld', 'test objectID comparison');
         t.equal(modules.collectionAccess.collectionExists('randomcol'), false, 'test collection check');

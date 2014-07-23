@@ -11,27 +11,6 @@
 
     var deepExtend = require('deep-extend'),
         deepEqual = require('deep-equal'),
-        deepValue = function (property, object) {
-            var value, i;
-
-            // delimeter is always classic dot
-            // notation
-            property = String(property).split('.');
-            value = object;
-
-            // iterate through the tree
-            for (i = 0; i < property.length; i += 1) {
-                try {
-                    value = value[property[i]];
-                } catch (err) {
-                    value = undefined;
-                    break;
-                }
-            }
-
-            // no property, no value
-            return property.length === 0 ? undefined : value;
-        },
         isEmptyObject = function (object) {
             var i;
 
@@ -79,6 +58,31 @@
 
     module.exports = function (Kinvey) {
         var colAccess = {
+            // fetch value from object
+            // using a 'JSON selector'
+            // i.e. "outer.inner"
+            deepValue: function (property, object) {
+                var value, i;
+
+                // delimeter is always classic dot
+                // notation
+                property = String(property).split('.');
+                value = object;
+
+                // iterate through the tree
+                for (i = 0; i < property.length; i += 1) {
+                    try {
+                        value = value[property[i]];
+                    } catch (err) {
+                        value = undefined;
+                        break;
+                    }
+                }
+
+                // no property, no value
+                return property.length === 0 ? undefined : value;
+            },
+
             // use simple strings to simplify
             // things
             objectID: function (id) {
@@ -106,17 +110,12 @@
                         insert: function (document, callback) {
                             callback = nor(callback);
 
-                            if (colAccess.collectionExists(name)) {
-                                col.push(document);
+                            // copy over new records
+                            col.push(document);
+                            Kinvey._collections[name] = nonulls(col);
+                            col = Kinvey._collections[name];
 
-                                // copy over new records
-                                Kinvey._collections[name] = nonulls(col);
-                                col = Kinvey._collections[name];
-
-                                callback(null);
-                            } else {
-                                callback('No such collection exists.');
-                            }
+                            callback(null);
                         },
 
                         // simply delete any records
@@ -136,7 +135,7 @@
                                 for (x = 0; x < col.length; x += 1) {
                                     for (y in query) {
                                         if (query.hasOwnProperty(y)) {
-                                            val = deepValue(y, col[x]);
+                                            val = colAccess.deepValue(y, col[x]);
 
                                             if (typeEqual(val, query[y])) {
                                                 if (deepEqual(val, query[y])) {
@@ -199,7 +198,7 @@
                                 for (x = 0; x < col.length; x += 1) {
                                     for (y in query) {
                                         if (query.hasOwnProperty(y)) {
-                                            val = deepValue(y, col[x]);
+                                            val = colAccess.deepValue(y, col[x]);
 
                                             if (typeEqual(val, query[y])) {
                                                 if (deepEqual(val, query[y])) {
