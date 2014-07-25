@@ -56,6 +56,7 @@
             // the target environment.
             Kinvey.setOptions({
                 'endpoints-base': path.resolve(__dirname, '../example/endpoints'),
+                push: 'logger',
                 email: {},
                 users: [
                     {
