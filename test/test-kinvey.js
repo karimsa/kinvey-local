@@ -326,7 +326,7 @@
 
     // backendContext
     test('verify backendContext', function (t) {
-        t.plan(28);
+        t.plan(40);
 
         var modules = Kinvey._modules,
             dt = (new Date()).toISOString(),
@@ -348,6 +348,79 @@
             }, 'event-based email receives proper data');
         });
         modules.email.send('test', 'test', 'test', 'test', 'test', 'test');
+
+        Kinvey._push = 'events';
+        Kinvey._events.once('push:message', function (evt) {
+            t.deepEqual(evt.users, ['all'], 'broadcastMessage - users');
+            t.equal(evt.message, 'hello world from push', 'broadcastMessage - message');
+        });
+        modules.push.broadcastMessage('hello world from push');
+
+        Kinvey._events.once('push:message', function (evt) {
+            t.deepEqual(evt.users, [{
+                username: 'custom'
+            }], 'sendMessage - users');
+            t.equal(evt.message, 'hello world from push', 'sendMessage - message');
+        });
+        modules.push.sendMessage([{
+            username: 'custom'
+        }], 'hello world from push');
+
+        Kinvey._events.once('push:payload', function (evt) {
+            t.deepEqual(evt.users, ['all'], 'broadcastPayload - users');
+            t.deepEqual(evt.iOSAps, {
+                isRight: 'yeah',
+                isFor: 'aps'
+            }, 'broadcastPayload - iOSAps');
+            t.deepEqual(evt.iOSExtras, {
+                isRight: 'yeah',
+                isFor: 'extra'
+            }, 'broadcastPayload - iOSExtras');
+            t.deepEqual(evt.androidPayload, {
+                isRight: 'yeah',
+                isFor: 'apayload'
+            }, 'broadcastPayload - androidPayload');
+        });
+        modules.push.broadcastPayload({
+            isRight: 'yeah',
+            isFor: 'aps'
+        }, {
+            isRight: 'yeah',
+            isFor: 'extra'
+        }, {
+            isRight: 'yeah',
+            isFor: 'apayload'
+        });
+
+        Kinvey._events.once('push:payload', function (evt) {
+            t.deepEqual(evt.users, [{
+                username: 'auser'
+            }], 'sendPayload - users');
+            t.deepEqual(evt.iOSAps, {
+                isRight: 'yeah',
+                isFor: 'aps'
+            }, 'sendPayload - iOSAps');
+            t.deepEqual(evt.iOSExtras, {
+                isRight: 'yeah',
+                isFor: 'extra'
+            }, 'sendPayload - iOSExtras');
+            t.deepEqual(evt.androidPayload, {
+                isRight: 'yeah',
+                isFor: 'apayload'
+            }, 'sendPayload - androidPayload');
+        });
+        modules.push.sendPayload([{
+            username: 'auser'
+        }], {
+            isRight: 'yeah',
+            isFor: 'aps'
+        }, {
+            isRight: 'yeah',
+            isFor: 'extra'
+        }, {
+            isRight: 'yeah',
+            isFor: 'apayload'
+        });
 
         t.ok(isEntity(modules.utils.kinveyEntity()), 'entity from nothing');
         t.ok(isEntity(modules.utils.kinveyEntity({})), 'entity from object');

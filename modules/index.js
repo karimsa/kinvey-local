@@ -10,12 +10,13 @@
 
     module.exports = function (Kinvey) {
         var modules = {
-            email: require('./email.js'),
-            utils: require('./utils.js'),
             logger: require('./logger.js'),
+            collectionAccess: require('./collectionAccess.js'),
+            push: require('./push.js'),
+            email: require('./email.js'),
             validation: require('./validation.js'),
-            backendContext: require('./backendContext.js'),
-            collectionAccess: require('./collectionAccess.js')
+            utils: require('./utils.js'),
+            backendContext: require('./backendContext.js')
         }, i;
 
         // extend everything with kinvey object

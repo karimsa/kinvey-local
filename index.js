@@ -176,6 +176,11 @@
                     deepExtend(Kinvey._collections, options.collections);
                 }
 
+                // event-based push notifs
+                if (options.hasOwnProperty('push')) {
+                    Kinvey._push = options.push;
+                }
+
                 // endpoint path base
                 if (options.hasOwnProperty('endpoints-base')) {
                     endBase = path.resolve(options['endpoints-base']);

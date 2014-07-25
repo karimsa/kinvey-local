@@ -19,6 +19,14 @@ var onRequest = function (request, response, modules) {
         response.error('You must specify the text to be echoed.');
     } else {
         modules.email.send('from@example.com', 'receiver@example.com', request.body.text, 'This is a sample email message.', 'reply-to@example.com', '<h1>This is a sample email message.</h1>');
+        modules.push.broadcastMessage('hello world');
+        modules.push.broadcastPayload({
+            isFor: 'iOSAps'
+        }, {
+            isFor: 'iOSExtras'
+        }, {
+            isFor: 'androidPayload'
+        });
 
         response.body = modules.utils.renderTemplate(modules.utils.base64.decode(modules.utils.base64.encode('{{body}}')), {
             body: request.body.text
