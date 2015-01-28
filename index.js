@@ -164,17 +164,24 @@
 
             // configure phony local env
             // using options
-            setOptions: function (options) {
+            setOptions: function (options, next) {
                 // if nothing is specified,
                 // load with as rc
                 if (!options) {
-                    return Kinvey.setOptions(rc('kinvey', {}));
+                    return Kinvey.setOptions(rc('kinvey', {}), next);
                 }
 
                 // if path specified, try to
                 // load as JSON
                 if (typeof options === 'string') {
-                    return Kinvey.setOptions(fs.readFileSync(path.resolve('.', options)));
+                    return fs.readFile(path.resolve(__dirname, options), 'utf8', function (err, data) {
+                        if (err) {
+                            next(err);
+                        } else {
+                            Kinvey.setOptions(data);
+                            next(null);
+                        }
+                    });
                 }
 
                 var endBase;
@@ -212,54 +219,58 @@
                 if (options.hasOwnProperty('email')) {
                     Kinvey._mailTransport = options.email || {};
                 }
+
+                next(null);
             },
 
             // simple key/secret verification
             // (does not verify against Kinvey)
             init: function (creds) {
-                // if config has not been loaded,
-                // force run .setOptions()
-                if (!Kinvey.hasOwnProperty('_endBase')) {
-                    Kinvey.setOptions();
-                }
-
-                // "promise"
                 return {
                     then: function (success, error) {
-                        var err = null;
+                        var err = null,
+                            cb = function () {
+                                // reset user login
+                                Kinvey._activeUser = null;
+                                Kinvey._didInit = null;
 
-                        // reset user login
-                        Kinvey._activeUser = null;
-                        Kinvey._didInit = null;
+                                // noopify
+                                success = success || noop;
+                                error = error || noop;
 
-                        // noopify
-                        success = success || noop;
-                        error = error || noop;
+                                // verify data like Kinvey
+                                if (creds.hasOwnProperty('appKey')) {
+                                    if (creds.hasOwnProperty('masterSecret')) {
+                                        err = new Kinvey.Error('Never user the masterSecret on the client side.');
+                                    } else if (!creds.hasOwnProperty('appSecret')) {
+                                        err = new Kinvey.Error('options argument must contain: appSecret.');
+                                    }
+                                } else {
+                                    err = new Kinvey.Error('options argument must contain: appKey.');
+                                }
 
-                        // verify data like Kinvey
-                        if (creds.hasOwnProperty('appKey')) {
-                            if (creds.hasOwnProperty('masterSecret')) {
-                                err = new Kinvey.Error('Never user the masterSecret on the client side.');
-                            } else if (!creds.hasOwnProperty('appSecret')) {
-                                err = new Kinvey.Error('options argument must contain: appSecret.');
-                            }
+                                // execute correct callback
+                                if (err) {
+                                    error(err);
+                                } else {
+                                    // set state
+                                    Kinvey._didInit = true;
+
+                                    // save credentials
+                                    Kinvey.appKey = creds.appKey;
+                                    Kinvey.appSecret = creds.appSecret;
+
+                                    // return to callback
+                                    success();
+                                }
+                            };
+
+                        // if config has not been loaded,
+                        // force run .setOptions()
+                        if (!Kinvey.hasOwnProperty('_endBase')) {
+                            Kinvey.setOptions(null, cb);
                         } else {
-                            err = new Kinvey.Error('options argument must contain: appKey.');
-                        }
-
-                        // execute correct callback
-                        if (err) {
-                            error(err);
-                        } else {
-                            // set state
-                            Kinvey._didInit = true;
-
-                            // save credentials
-                            Kinvey.appKey = creds.appKey;
-                            Kinvey.appSecret = creds.appSecret;
-
-                            // return to callback
-                            success();
+                            cb();
                         }
                     }
                 };

@@ -48,9 +48,6 @@
             Kinvey = require('../index.js');
 
             t.plan(1);
-            t.throws(function () {
-                Kinvey.setOptions({});
-            }, false, 'ensure that `endpoints-base` is given');
 
             // these settings are to mimic
             // the target environment.
@@ -92,6 +89,8 @@
                         }
                     ]
                 }
+            }, function () {
+                t.ok(true, 'options are set');
             });
         } else {
             t.done();
@@ -102,6 +101,8 @@
             // the target environment with the settings
             // passed above to the local object
             Kinvey = require('kinvey');
+
+            t.ok(true, 'options are set');
         }
     });
 
