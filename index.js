@@ -2,7 +2,7 @@
  * index.js
  * Script to tie everything together.
  *
- * Copyright (C) 2014 Karim Alibhai.
+ * Copyright (C) Karim Alibhai 2014-2015.
  **/
 
 (function () {

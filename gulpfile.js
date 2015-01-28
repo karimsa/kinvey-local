@@ -2,7 +2,7 @@
  * Gulpfile.js
  * Build management for kinvey-local.
  *
- * Copyright (C) 2014 Karim Alibhai.
+ * Copyright (C) Karim Alibhai 2014-2015.
  **/
 
 (function () {
