@@ -8,7 +8,9 @@
 (function () {
     "use strict";
 
-    var path = require('path'),
+    var rc = require('rc'),
+        fs = require('fs'),
+        path = require('path'),
         deepExtend = require('deep-extend'),
         EventEmitter = require('events').EventEmitter,
         noop = function () {
@@ -76,6 +78,7 @@
             Error: function (msg) {
                 return new Error(msg);
             },
+
             User: {
                 // verify data, and lookup user
                 // via username/password pair
@@ -162,6 +165,18 @@
             // configure phony local env
             // using options
             setOptions: function (options) {
+                // if nothing is specified,
+                // load with as rc
+                if (!options) {
+                    return Kinvey.setOptions(rc('kinvey', {}));
+                }
+
+                // if path specified, try to
+                // load as JSON
+                if (typeof options === 'string') {
+                    return Kinvey.setOptions(fs.readFileSync(path.resolve('.', options)));
+                }
+
                 var endBase;
 
                 // puts users store back into collections
@@ -202,6 +217,13 @@
             // simple key/secret verification
             // (does not verify against Kinvey)
             init: function (creds) {
+                // if config has not been loaded,
+                // force run .setOptions()
+                if (!Kinvey.hasOwnProperty('_endBase')) {
+                    Kinvey.setOptions();
+                }
+
+                // "promise"
                 return {
                     then: function (success, error) {
                         var err = null;
@@ -306,6 +328,7 @@
                 }
             }
         },
+
         hooks = {
             hook: require('istanbul').hook,
 
